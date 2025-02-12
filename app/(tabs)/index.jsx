@@ -10,11 +10,9 @@ export default function IndexScreen() {
     <View style={styles.container}>
       <Text style={styles.header}>WELCOME</Text>
       <Text style={styles.motivation}>Take control of your tasks with ease!</Text>
-
-      {/* סיכום המשימות מועבר לרכיב נפרד */}
+      
       <TaskSummary />
 
-      {/* כפתור הוספת משימה */}
       <Button
         mode="contained"
         onPress={() => router.push('/(tabs)/AddTask')}

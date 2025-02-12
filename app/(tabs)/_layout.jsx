@@ -1,9 +1,8 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { TaskProvider } from '../TaskContext';
+import { TaskProvider } from '../components/TaskContext';
 import { PaperProvider } from 'react-native-paper';
 
-// פונקציה להחזרת אייקון מתאים לכל טאב
 const getTabBarIcon = (routeName, color, size) => {
   const icons = {
     index: 'home',

@@ -1,9 +1,11 @@
-import { View, StyleSheet, FlatList } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { Text, Card } from 'react-native-paper';
-import { useTasks } from '../TaskContext';
+import { useRouter } from 'expo-router';
+import { useTasks } from './TaskContext';
 
 export default function TaskSummary() {
   const { tasks } = useTasks();
+  const router = useRouter();
 
   const completedTasks = tasks.filter(task => task.done).length;
   const pendingTasks = tasks.length - completedTasks;
@@ -11,6 +13,10 @@ export default function TaskSummary() {
     .filter(task => !task.done && task.dueDate)
     .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
     .slice(0, 2);
+
+  const navigateToTaskDetails = (taskId) => {
+    router.push(`/Details?id=${taskId}`);
+  };
 
   return (
     <View>
@@ -38,12 +44,12 @@ export default function TaskSummary() {
           {upcomingTasks.length > 0 ? (
             <FlatList
               data={upcomingTasks}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item) => item.id.toString()}
               renderItem={({ item }) => (
-                <View style={styles.taskItem}>
+                <TouchableOpacity style={styles.taskItem} onPress={() => navigateToTaskDetails(item.id)}>
                   <Text style={styles.taskText}>{item.title}</Text>
                   <Text style={styles.dueDateText}>Due: {new Date(item.dueDate).toDateString()}</Text>
-                </View>
+                </TouchableOpacity>
               )}
             />
           ) : (

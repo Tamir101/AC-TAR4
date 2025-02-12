@@ -1,29 +1,26 @@
 import { useState } from 'react';
 import { View, StyleSheet, Keyboard, TouchableWithoutFeedback, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useTasks } from '../TaskContext';
-import TaskForm from '../components/TaskForm'; // ייבוא של TaskForm
-import { Text, Card, IconButton } from 'react-native-paper';
+import { useTasks } from '../components/TaskContext';
+import TaskForm from '../components/TaskForm'; 
+import { Text, Card, IconButton, Chip } from 'react-native-paper';
 
 export default function Details() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const { tasks, setTasks } = useTasks();
-  const task = tasks.find((t) => t.id === Number(id)); // חיפוש המשימה על פי מזהה
-
+  const task = tasks.find((t) => t.id === Number(id)); 
   const [isEditing, setIsEditing] = useState(false);
 
-  // פונקציה שתשמור את המשימה החדשה או תעדכן את המשימה הקיימת
   const handleTaskSubmit = (newTask) => {
     if (task) {
-      setTasks(tasks.map((t) => (t.id === task.id ? newTask : t))); // עדכון משימה קיימת
+      setTasks(tasks.map((t) => (t.id === task.id ? newTask : t))); 
     } else {
-      setTasks([...tasks, newTask]); // הוספת משימה חדשה
+      setTasks([...tasks, newTask]); 
     }
-    setIsEditing(false); // סוגרים את מצב העריכה אחרי השמירה
+    setIsEditing(false); 
   };
 
-  // אם המשימה לא נמצאה, הראה הודעה
   if (!task && id) {
     return (
       <View style={styles.container}>
@@ -32,7 +29,6 @@ export default function Details() {
     );
   }
 
-  // פונקציה לאישור מחיקת המשימה
   const confirmDelete = () => {
     Alert.alert(
       "Delete Task",
@@ -47,21 +43,19 @@ export default function Details() {
     );
   };
 
-  // פונקציה לסגור את מצב העריכה בעת יציאה מהמסך
   const handleBack = () => {
-    setIsEditing(false); // סגירת מצב העריכה
-    router.push("/List"); // חזרה לדף הרשימה
+    setIsEditing(false);
+    router.push("/List"); 
   };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
-        {/* כפתור חזרה */}
         <IconButton 
           icon="arrow-left" 
           size={28} 
           style={styles.backButton} 
-          onPress={handleBack} // סגירת העריכה במקרה של חזרה
+          onPress={handleBack} 
         />
 
         <Card style={styles.card}>
@@ -69,24 +63,31 @@ export default function Details() {
             title={isEditing ? 'Edit Task' : 'Task Details'}
             right={() => (
               <View style={styles.iconRow}>
-                {/* כפתור עריכה */}
                 <IconButton icon="pencil" size={24} onPress={() => setIsEditing(!isEditing)} />
-                {/* כפתור מחיקה */}
                 <IconButton icon="delete" size={24} color="red" onPress={confirmDelete} />
               </View>
             )}
           />
           <Card.Content>
             {isEditing ? (
-              // הצגת טופס העריכה
               <TaskForm existingTask={task} onSave={handleTaskSubmit} />
             ) : (
               <>
-                {/* הצגת פרטי המשימה */}
-                <Text style={styles.infoText}>Task Name: {task?.title}</Text>
-                <Text style={styles.infoText}>Description: {task?.description}</Text>
-                <Text style={styles.infoText}>Due Date: {new Date(task?.dueDate).toDateString()}</Text>
-                <Text style={styles.infoText}>Completed: {task?.done ? 'Yes' : 'No'}</Text>
+                <Text style={styles.taskTitle}>{task?.title}</Text>
+                <Text style={styles.taskDescription}>{task?.description}</Text>
+                <Text style={styles.dueDate}>Due Date: {new Date(task?.dueDate).toDateString()}</Text>
+                <Text style={[styles.taskStatus, task?.done ? styles.doneStatus : styles.pendingStatus]}>
+                  Status: {task?.done ? 'Completed' : 'Pending'}
+                </Text>
+                {/* הצגת הצ'יפ בהתאם אם דחוף או לא */}
+                <Chip 
+                  style={[
+                    styles.urgentChip, 
+                    task?.urgent ? styles.urgent : styles.notUrgent
+                  ]}
+                >
+                  {task?.urgent ? 'Urgent' : 'Not Urgent'}
+                </Chip>
               </>
             )}
           </Card.Content>
@@ -97,9 +98,18 @@ export default function Details() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#E3F2FD', justifyContent: 'center' },
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#E3F2FD' },
   backButton: { position: 'absolute', top: 20, left: 20, zIndex: 10 },
-  card: { backgroundColor: 'white', padding: 20, borderRadius: 10 },
+  card: { backgroundColor: 'white', padding: 20, borderRadius: 10, width: '90%', maxHeight: 600, elevation: 4, alignItems: 'center' },
   iconRow: { flexDirection: 'row', justifyContent: 'flex-end' },
-  infoText: { fontSize: 16, marginBottom: 10 },
+  taskTitle: { fontSize: 24, fontWeight: 'bold', color: '#212121', marginBottom: 8, textAlign: 'center' },
+  taskDescription: { fontSize: 16, color: '#616161', marginBottom: 8, textAlign: 'center' },
+  dueDate: { fontSize: 14, color: '#1E88E5', marginBottom: 8, textAlign: 'center' },
+  taskStatus: { fontSize: 16, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' },
+  doneStatus: { color: '#4CAF50' },
+  pendingStatus: { color: '#D32F2F' },
+  urgentChip: { marginTop: 10, padding: 5, alignSelf: 'center' },
+  urgent: { backgroundColor: '#FFCDD2', color: '#D32F2F' },
+  notUrgent: { backgroundColor: '#C8E6C9', color: '#388E3C' },
+  noTask: { fontSize: 24, fontWeight: 'bold', color: '#D32F2F', textAlign: 'center', padding: 20 },
 });

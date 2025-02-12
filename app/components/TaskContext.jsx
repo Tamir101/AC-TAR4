@@ -1,6 +1,5 @@
 import { createContext, useContext, useState } from 'react';
 
-// יצירת הקונטקסט
 const TaskContext = createContext();
 
 // **רשימה התחלתית של 10 משימות**
