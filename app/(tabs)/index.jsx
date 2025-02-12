@@ -1,7 +1,7 @@
 import { View, StyleSheet } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import TaskSummary from '@/comps/TaskSummary';
+import TaskSummary from '../components/TaskSummary';
 
 export default function IndexScreen() {
   const router = useRouter();
@@ -17,7 +17,7 @@ export default function IndexScreen() {
       {/* כפתור הוספת משימה */}
       <Button
         mode="contained"
-        onPress={() => router.push('/(tabs)/addEdit')}
+        onPress={() => router.push('/(tabs)/AddTask')}
         style={styles.addButton}
       >
         Add New Task

@@ -7,9 +7,9 @@ import { PaperProvider } from 'react-native-paper';
 const getTabBarIcon = (routeName, color, size) => {
   const icons = {
     index: 'home',
-    list: 'list',
-    details: 'information-circle',
-    addEdit: 'create',
+    List: 'list',
+    Details: 'information-circle',
+    AddTask: 'create',
   };
   return <Ionicons name={icons[routeName]} size={size} color={color} />;
 };
@@ -33,9 +33,9 @@ export default function Layout() {
           })}
         >
           <Tabs.Screen name="index" options={{ title: 'Home', headerShown: false }} />
-          <Tabs.Screen name="list" options={{ title: 'List', headerShown: false }} />
-          <Tabs.Screen name="details" options={{ title: 'Details', headerShown: false }} />
-          <Tabs.Screen name="addEdit" options={{ title: 'Add/Edit', headerShown: false }} />
+          <Tabs.Screen name="List" options={{ title: 'List', headerShown: false }} />
+          <Tabs.Screen name="Details" options={{ title: 'Details', headerShown: false }} />
+          <Tabs.Screen name="AddTask" options={{ title: 'Add Task', headerShown: false }} />
         </Tabs>
       </TaskProvider>
     </PaperProvider>

@@ -1,25 +1,30 @@
 import { useState } from 'react';
-import { View, StyleSheet, Alert, Platform, Keyboard, TouchableWithoutFeedback } from 'react-native';
-import { Text, Card, IconButton, Button, RadioButton, TextInput } from 'react-native-paper';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { View, StyleSheet, Keyboard, TouchableWithoutFeedback, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTasks } from '../TaskContext';
+import TaskForm from '../components/TaskForm'; // ייבוא של TaskForm
+import { Text, Card, IconButton } from 'react-native-paper';
 
-export default function details() {
+export default function Details() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const { tasks, setTasks } = useTasks();
-  const task = tasks.find((t) => t.id === Number(id));
+  const task = tasks.find((t) => t.id === Number(id)); // חיפוש המשימה על פי מזהה
 
   const [isEditing, setIsEditing] = useState(false);
-  const [taskName, setTaskName] = useState(task?.title || '');
-  const [taskDescription, setTaskDescription] = useState(task?.description || '');
-  const [isUrgent, setIsUrgent] = useState(task?.urgent || false);
-  const [dueDate, setDueDate] = useState(task?.dueDate ? new Date(task.dueDate) : new Date());
-  const [isCompleted, setIsCompleted] = useState(task?.done || false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
 
-  if (!task) {
+  // פונקציה שתשמור את המשימה החדשה או תעדכן את המשימה הקיימת
+  const handleTaskSubmit = (newTask) => {
+    if (task) {
+      setTasks(tasks.map((t) => (t.id === task.id ? newTask : t))); // עדכון משימה קיימת
+    } else {
+      setTasks([...tasks, newTask]); // הוספת משימה חדשה
+    }
+    setIsEditing(false); // סוגרים את מצב העריכה אחרי השמירה
+  };
+
+  // אם המשימה לא נמצאה, הראה הודעה
+  if (!task && id) {
     return (
       <View style={styles.container}>
         <Text style={styles.noTask}>Task not found</Text>
@@ -27,70 +32,61 @@ export default function details() {
     );
   }
 
-  const handleSave = () => {
-    const updatedTasks = tasks.map((t) =>
-      t.id === Number(id) ? { ...t, title: taskName, description: taskDescription, urgent: isUrgent, dueDate, done: isCompleted } : t
+  // פונקציה לאישור מחיקת המשימה
+  const confirmDelete = () => {
+    Alert.alert(
+      "Delete Task",
+      "Are you sure you want to delete this task?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: () => {
+            setTasks(tasks.filter((t) => t.id !== Number(id)));
+            router.push("/List");
+        }},
+      ]
     );
-    setTasks(updatedTasks);
-    setIsEditing(false);
+  };
+
+  // פונקציה לסגור את מצב העריכה בעת יציאה מהמסך
+  const handleBack = () => {
+    setIsEditing(false); // סגירת מצב העריכה
+    router.push("/List"); // חזרה לדף הרשימה
   };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
+        {/* כפתור חזרה */}
+        <IconButton 
+          icon="arrow-left" 
+          size={28} 
+          style={styles.backButton} 
+          onPress={handleBack} // סגירת העריכה במקרה של חזרה
+        />
+
         <Card style={styles.card}>
-          <Card.Title 
+          <Card.Title
             title={isEditing ? 'Edit Task' : 'Task Details'}
-            right={(props) => (
+            right={() => (
               <View style={styles.iconRow}>
-                <IconButton {...props} icon="pencil" size={24} onPress={() => setIsEditing(!isEditing)} />
-                <IconButton {...props} icon="delete" size={24} color="red" onPress={handleSave} />
+                {/* כפתור עריכה */}
+                <IconButton icon="pencil" size={24} onPress={() => setIsEditing(!isEditing)} />
+                {/* כפתור מחיקה */}
+                <IconButton icon="delete" size={24} color="red" onPress={confirmDelete} />
               </View>
             )}
           />
           <Card.Content>
             {isEditing ? (
-              <>
-                <TextInput label="Task Name" value={taskName} onChangeText={setTaskName} style={styles.input} mode="outlined" />
-                <TextInput label="Description" value={taskDescription} onChangeText={setTaskDescription} style={styles.input} mode="outlined" />
-                <Text style={styles.label}>Is this task urgent?</Text>
-                <RadioButton.Group onValueChange={(value) => setIsUrgent(value === 'yes')} value={isUrgent ? 'yes' : 'no'}>
-                  <View style={styles.radioRow}>
-                    <RadioButton value="yes" /><Text>Yes</Text>
-                    <RadioButton value="no" /><Text>No</Text>
-                  </View>
-                </RadioButton.Group>
-                <Text style={styles.label}>Due Date:</Text>
-                <Button mode="outlined" onPress={() => setShowDatePicker(true)} style={styles.dateButton}>
-                  📅 {dueDate.toDateString()}
-                </Button>
-                {showDatePicker && (
-                  <DateTimePicker
-                    value={dueDate}
-                    mode="date"
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    onChange={(event, selectedDate) => {
-                      setShowDatePicker(false);
-                      if (selectedDate) setDueDate(selectedDate);
-                    }}
-                  />
-                )}
-                <Text style={styles.label}>Has this task been completed?</Text>
-                <RadioButton.Group onValueChange={(value) => setIsCompleted(value === 'yes')} value={isCompleted ? 'yes' : 'no'}>
-                  <View style={styles.radioRow}>
-                    <RadioButton value="yes" /><Text>Yes</Text>
-                    <RadioButton value="no" /><Text>No</Text>
-                  </View>
-                </RadioButton.Group>
-                <Button mode="contained" onPress={handleSave} style={styles.saveButton}>Save Changes</Button>
-              </>
+              // הצגת טופס העריכה
+              <TaskForm existingTask={task} onSave={handleTaskSubmit} />
             ) : (
               <>
-                <Text style={styles.infoText}>Task Name: {taskName}</Text>
-                <Text style={styles.infoText}>Description: {taskDescription}</Text>
-                <Text style={styles.infoText}>Urgent: {isUrgent ? 'Yes' : 'No'}</Text>
-                <Text style={styles.infoText}>Due Date: {dueDate.toDateString()}</Text>
-                <Text style={styles.infoText}>Completed: {isCompleted ? 'Yes' : 'No'}</Text>
+                {/* הצגת פרטי המשימה */}
+                <Text style={styles.infoText}>Task Name: {task?.title}</Text>
+                <Text style={styles.infoText}>Description: {task?.description}</Text>
+                <Text style={styles.infoText}>Due Date: {new Date(task?.dueDate).toDateString()}</Text>
+                <Text style={styles.infoText}>Completed: {task?.done ? 'Yes' : 'No'}</Text>
               </>
             )}
           </Card.Content>
@@ -102,13 +98,8 @@ export default function details() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#E3F2FD', justifyContent: 'center' },
+  backButton: { position: 'absolute', top: 20, left: 20, zIndex: 10 },
   card: { backgroundColor: 'white', padding: 20, borderRadius: 10 },
-  input: { marginBottom: 15 },
-  label: { fontSize: 16, fontWeight: 'bold', marginTop: 10 },
-  radioRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
-  dateButton: { marginBottom: 15, borderColor: '#1E90FF', borderWidth: 1 },
-  saveButton: { backgroundColor: '#1E90FF', marginTop: 10 },
-  noTask: { textAlign: 'center', fontSize: 18, color: 'red' },
-  infoText: { fontSize: 16, marginBottom: 10 },
   iconRow: { flexDirection: 'row', justifyContent: 'flex-end' },
+  infoText: { fontSize: 16, marginBottom: 10 },
 });

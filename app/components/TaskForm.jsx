@@ -10,17 +10,14 @@ export default function TaskForm({ existingTask, onSave }) {
   const [dueDate, setDueDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // ✅ אם זו משימה לעריכה → נטעין את הנתונים שלה
   useEffect(() => {
-    console.log(existingTask);
     if (existingTask) {
       setTaskName(existingTask.title || '');
       setTaskDescription(existingTask.description || '');
       setIsUrgent(existingTask.urgent || false);
       setDueDate(existingTask.dueDate ? new Date(existingTask.dueDate) : new Date());
     } else {
-        console.log("did it reset?")
-      resetForm(); // 🔹 אם זו משימה חדשה → נאפס את כל הערכים
+      resetForm();
     }
   }, [existingTask?.id]);
 
@@ -47,7 +44,7 @@ export default function TaskForm({ existingTask, onSave }) {
       done: existingTask ? existingTask.done : false,
     });
 
-    resetForm(); // ✅ הטופס מתנקה אחרי שמירה
+    resetForm();
   };
 
   return (
@@ -78,7 +75,7 @@ export default function TaskForm({ existingTask, onSave }) {
           )}
 
           <Button mode="contained" onPress={handleSubmit} style={styles.saveButton}>
-            {existingTask ? '💾 Save Changes' : '➕ Add Task'}
+            {existingTask ? 'Save Changes' : 'Add Task'}
           </Button>
         </Card.Content>
       </Card>
