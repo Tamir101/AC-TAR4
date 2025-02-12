@@ -3,7 +3,7 @@ import { View, StyleSheet, Alert, Platform, Keyboard, TouchableWithoutFeedback }
 import { Text, Card, IconButton, Button, RadioButton, TextInput } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useTasks } from '../comps/TaskContext';
+import { useTasks } from '../TaskContext';
 
 export default function details() {
   const router = useRouter();
