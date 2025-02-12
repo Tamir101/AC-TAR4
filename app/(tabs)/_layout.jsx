@@ -1,10 +1,12 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { TaskProvider } from '../comps/TaskContext'; // ✅ חיבור ה-Context
+import { PaperProvider } from 'react-native-paper';
 
 
 export default function Layout() {
   return (
+    <PaperProvider>
     <TaskProvider>
     <Tabs
       screenOptions={({ route }) => ({
@@ -34,5 +36,6 @@ export default function Layout() {
       <Tabs.Screen name="addEdit" options={{ title: 'Add/Edit' }} />
     </Tabs>
     </TaskProvider>
+    </PaperProvider>
   );
 }

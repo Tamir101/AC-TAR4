@@ -1,102 +1,114 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { View, StyleSheet, Alert } from 'react-native';
-import { Text, Card, Button, RadioButton } from 'react-native-paper';
-import { useTasks } from '../comps/TaskContext'; // ✅ שימוש ב-TaskContext
+import { useState } from 'react';
+import { View, StyleSheet, Alert, Platform, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { Text, Card, IconButton, Button, RadioButton, TextInput } from 'react-native-paper';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useTasks } from '../comps/TaskContext';
 
 export default function details() {
+  const router = useRouter();
   const { id } = useLocalSearchParams();
   const { tasks, setTasks } = useTasks();
-  const router = useRouter();
+  const task = tasks.find((t) => t.id === Number(id));
 
-  // 🔹 מציאת המשימה לפי ה-ID
-  const task = tasks.find(t => t.id === id);
+  const [isEditing, setIsEditing] = useState(false);
+  const [taskName, setTaskName] = useState(task?.title || '');
+  const [taskDescription, setTaskDescription] = useState(task?.description || '');
+  const [isUrgent, setIsUrgent] = useState(task?.urgent || false);
+  const [dueDate, setDueDate] = useState(task?.dueDate ? new Date(task.dueDate) : new Date());
+  const [isCompleted, setIsCompleted] = useState(task?.done || false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   if (!task) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>Task not found</Text>
+        <Text style={styles.noTask}>Task not found</Text>
       </View>
     );
   }
 
-  // 🔹 פונקציה לעדכון סטטוס המשימה
-  const updateStatus = (newStatus) => {
-    setTasks(tasks.map(t => (t.id === id ? { ...t, status: newStatus } : t)));
-  };
-
-  // 🔹 פונקציה למחיקת משימה עם אישור
-  const handleDelete = () => {
-    Alert.alert(
-      "Delete Task",
-      "Are you sure you want to delete this task?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "OK", onPress: () => {
-          setTasks(tasks.filter(t => t.id !== id));
-          router.push('/list');
-        }}
-      ]
+  const handleSave = () => {
+    const updatedTasks = tasks.map((t) =>
+      t.id === Number(id) ? { ...t, title: taskName, description: taskDescription, urgent: isUrgent, dueDate, done: isCompleted } : t
     );
+    setTasks(updatedTasks);
+    setIsEditing(false);
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Task Details</Text>
-
-      <Card style={styles.card}>
-        <Card.Content>
-          <Text style={styles.title}>{task.title}</Text>
-          <Text style={styles.description}>{task.description}</Text>
-
-          <View style={styles.row}>
-            <Text style={styles.dueDate}>📅 Due Date: {new Date(task.dueDate).toDateString()}</Text>
-            {task.urgent && <Text style={styles.urgent}>⚠️ Urgent</Text>}
-          </View>
-
-          <Text style={styles.status}>Status:</Text>
-          <RadioButton.Group onValueChange={updateStatus} value={task.status || 'in-progress'}>
-            <View style={styles.radioRow}>
-              <RadioButton.Item label="✅ Completed" value="completed" />
-              <RadioButton.Item label="⏳ In Progress" value="in-progress" />
-              <RadioButton.Item label="❌ Cancelled" value="cancelled" />
-            </View>
-          </RadioButton.Group>
-        </Card.Content>
-      </Card>
-
-      {/* 🔹 כפתורים לפעולות */}
-      <View style={styles.buttonContainer}>
-      <Button mode="contained" onPress={() => router.push({ pathname: '/addEdit', params: { id: task.id } })}>
-  ✏️ Edit Task
-</Button>
-
-
-        <Button mode="contained" onPress={handleDelete} style={styles.deleteButton}>
-          🗑️ Delete Task
-        </Button>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={styles.container}>
+        <Card style={styles.card}>
+          <Card.Title 
+            title={isEditing ? 'Edit Task' : 'Task Details'}
+            right={(props) => (
+              <View style={styles.iconRow}>
+                <IconButton {...props} icon="pencil" size={24} onPress={() => setIsEditing(!isEditing)} />
+                <IconButton {...props} icon="delete" size={24} color="red" onPress={handleSave} />
+              </View>
+            )}
+          />
+          <Card.Content>
+            {isEditing ? (
+              <>
+                <TextInput label="Task Name" value={taskName} onChangeText={setTaskName} style={styles.input} mode="outlined" />
+                <TextInput label="Description" value={taskDescription} onChangeText={setTaskDescription} style={styles.input} mode="outlined" />
+                <Text style={styles.label}>Is this task urgent?</Text>
+                <RadioButton.Group onValueChange={(value) => setIsUrgent(value === 'yes')} value={isUrgent ? 'yes' : 'no'}>
+                  <View style={styles.radioRow}>
+                    <RadioButton value="yes" /><Text>Yes</Text>
+                    <RadioButton value="no" /><Text>No</Text>
+                  </View>
+                </RadioButton.Group>
+                <Text style={styles.label}>Due Date:</Text>
+                <Button mode="outlined" onPress={() => setShowDatePicker(true)} style={styles.dateButton}>
+                  📅 {dueDate.toDateString()}
+                </Button>
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={dueDate}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={(event, selectedDate) => {
+                      setShowDatePicker(false);
+                      if (selectedDate) setDueDate(selectedDate);
+                    }}
+                  />
+                )}
+                <Text style={styles.label}>Has this task been completed?</Text>
+                <RadioButton.Group onValueChange={(value) => setIsCompleted(value === 'yes')} value={isCompleted ? 'yes' : 'no'}>
+                  <View style={styles.radioRow}>
+                    <RadioButton value="yes" /><Text>Yes</Text>
+                    <RadioButton value="no" /><Text>No</Text>
+                  </View>
+                </RadioButton.Group>
+                <Button mode="contained" onPress={handleSave} style={styles.saveButton}>Save Changes</Button>
+              </>
+            ) : (
+              <>
+                <Text style={styles.infoText}>Task Name: {taskName}</Text>
+                <Text style={styles.infoText}>Description: {taskDescription}</Text>
+                <Text style={styles.infoText}>Urgent: {isUrgent ? 'Yes' : 'No'}</Text>
+                <Text style={styles.infoText}>Due Date: {dueDate.toDateString()}</Text>
+                <Text style={styles.infoText}>Completed: {isCompleted ? 'Yes' : 'No'}</Text>
+              </>
+            )}
+          </Card.Content>
+        </Card>
       </View>
-    </View>
+    </TouchableWithoutFeedback>
   );
 }
 
-// ✅ סגנונות מותאמים לסגנון של שאר הדפים
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#E3F2FD', justifyContent: 'center' },
-  header: { fontSize: 28, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, color: '#0D47A1' },
-
-  card: { backgroundColor: 'white', padding: 20, borderRadius: 10, shadowColor: '#000', shadowOpacity: 0.2, shadowOffset: { width: 0, height: 2 }, marginBottom: 20 },
-
-  title: { fontSize: 24, fontWeight: 'bold', color: '#0D47A1', textAlign: 'center', marginBottom: 10 },
-  description: { fontSize: 18, textAlign: 'center', color: '#333', marginBottom: 15 },
-
-  row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
-  dueDate: { fontSize: 16, color: '#555' },
-  urgent: { fontSize: 16, fontWeight: 'bold', color: 'red' },
-
-  status: { fontSize: 18, textAlign: 'center', fontWeight: 'bold', marginBottom: 15, color: '#0D47A1' },
-  radioRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 10 },
-
-  buttonContainer: { flexDirection: 'row', justifyContent: 'space-around' },
-  editButton: { backgroundColor: '#1E90FF', paddingVertical: 5 },
-  deleteButton: { backgroundColor: 'red', paddingVertical: 5 },
+  card: { backgroundColor: 'white', padding: 20, borderRadius: 10 },
+  input: { marginBottom: 15 },
+  label: { fontSize: 16, fontWeight: 'bold', marginTop: 10 },
+  radioRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
+  dateButton: { marginBottom: 15, borderColor: '#1E90FF', borderWidth: 1 },
+  saveButton: { backgroundColor: '#1E90FF', marginTop: 10 },
+  noTask: { textAlign: 'center', fontSize: 18, color: 'red' },
+  infoText: { fontSize: 16, marginBottom: 10 },
+  iconRow: { flexDirection: 'row', justifyContent: 'flex-end' },
 });
